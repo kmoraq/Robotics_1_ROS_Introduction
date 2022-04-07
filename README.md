@@ -25,6 +25,9 @@ Then we give the value of the message suggested by the guide and we add two more
   send(velPub,velMsg);%Envío
   pause(1)
 ```
+Our turtle moved the values given on the message. Here you can see it:
+[![1.png](https://i.postimg.cc/bv8ShQrn/1.png)](https://postimg.cc/RWsZ1JcC)
+
 Later for subscribe to the topic pose in turtle1 we used `rossubscriber` by defining first the name of the topic and then the type of the topic:
 ```Matlab
   %%
@@ -47,4 +50,10 @@ Additionally, we sent the messages for modifying the positions in the axes X, Y 
   %%
   rosshutdown %Se finaliza el nodo maestro
 ```
+After sending the values of position the turtle moves to the position stated:
+[![2.png](https://i.postimg.cc/V6kSSmjL/2.png)](https://postimg.cc/Z9XY2k71)
+
+and we show the last message obtained:
+[![pose.png](https://i.postimg.cc/fbKtTJSr/pose.png)](https://postimg.cc/Z9WKwYc8)
+
 ## Management of hello_turtle with Python:
