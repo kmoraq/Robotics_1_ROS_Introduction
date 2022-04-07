@@ -20,4 +20,16 @@ Then we give the value of the message suggested by the guide and we add two more
   send(velPub,velMsg);%Envío
   pause(1)
 ```
+Later for subscribe to the topic pose in turtle1 we used `rossubscriber` by defining first the name of the topic and then the type of the topic. By using the command `.LatestMessage` we can show the last message obtained.
+```Matlab
+  %%
+  subP= rossubscriber('/turtle1/pose','turtlesim/Pose');%Se hace la subscripción al tópico.
+  subP.LatestMessage %Se muestra el último mensaje obtenido
+```
+In order to send the values associated to the pose of turtle1 we explored the services of turtlesim for modifying the pose of the turtle, we created the serive and then the message.
+```Matlab
+  %%
+  PoseSvcCLient=rossvcclient('/turtle1/teleport_absolute');%Se crea el servicio que permitirá enviar los valores      asociados a la pose
+  PseMsg=rosmessage(PoseSvcCLient);
+```
 ## Management of hello_turtle with Python:
