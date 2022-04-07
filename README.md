@@ -3,4 +3,5 @@ With the final purpose of understanding the basic concepts of ROS and use the fu
 
 **Table of Contents**
 ## Conection of ROS with Matlab:
+After inicialitzating the master node and the turtlesim simulator. started the master node but this time on Matlab, then we created the publicator and the message 
 ## Management of hello_turtle with Python:
