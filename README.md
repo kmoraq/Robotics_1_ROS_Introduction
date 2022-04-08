@@ -57,3 +57,134 @@ and we show the last message obtained:
 [![pose.png](https://i.postimg.cc/fbKtTJSr/pose.png)](https://postimg.cc/Z9WKwYc8)
 
 ## Management of hello_turtle with Python:
+**Inclusion de librerías**
+
+La librería rospy es la que contiene todas la funciones necesarias para implementar ROS en python.
+
+Adicionalmente se agregan librerías especiales que permiten trabajar los objetos de tipo ROSservice, ROStopics y sus menajes.
+
+En este caso se utiliza la clase Twist que permite publicar mensajes para el tópico correspondiente a la velocidad de la tortuga.
+
+Se utilizaron dos servicios en esta implemnetación, el servicio /turtle1/teleport_absolute y el servicio /turtle1/teleport_relative, por lo que se hace necesario importar las clases correspondientes al tipo de dato que estos servicios operan. Se importan entonces las clases TeleporAbsolute y TeleportRelative desde la librería especial para el entorno de simulación de turtle.
+
+Las demás librerías son propias para el funcionamiento de python al imprimir en consola y capturar eventos del teclado.
+
+```python
+from tkinter.tix import TCL_WINDOW_EVENTS, TixWidget
+from unittest import case
+
+from matplotlib.pyplot import get
+import rospy
+from geometry_msgs.msg import Twist
+from turtlesim.srv import TeleportAbsolute, TeleportRelative
+import termios, sys, os
+from numpy import pi
+```
+
+**Funciones para acceder a los servicios**
+
+La función teleport se encarga de esperar a que el servicio /turtle1/teleport_absolute esté disponible, crea un objeto con los métodos necesarios para llamar al servicio y pasarle los parámetros necesarios para cambiar la orientación y el origen del marco de referencia de la tortuga. Esta función recibe como parámetros el angulo ang de la orientación y las coordenadas x,y del origen. Se utiliza la estructura try exept para capturar e identificar posibles errores en tiempo de ejecución.
+
+En particular el método serviceProxy se encarga de crear al objeto capaz de interacutar con el servicio, esta recibe como parámetros el servicio y el tipo de dato que le corresponde.
+
+En esta funciónel tipo de dato correspondiente es TeleporAbsolute y debe ser importado desde turtlesim.srv.
+
+```python
+def teleport(x, y, ang):
+    rospy.wait_for_service('/turtle1/teleport_absolute')
+    try:
+        teleportA = rospy.ServiceProxy('/turtle1/teleport_absolute', TeleportAbsolute)
+        resp1 = teleportA(x, y, ang)
+        print('Teleported to x: {}, y: {}, ang: {}'.format(str(x),str(y),str(ang)))
+    except rospy.ServiceException as e:
+        print(str(e))
+```
+
+Esta función se define del mismo modo que la anterior, la diferencia fundamental es el servicio y el tipo de dato que se deben indicar en el método rospy.ServiceProxy(). En este caso el servicio utilizado es /turtle1/teleport_relative y el tipo de dato correspondiente es TeleportRelative. Adicionalmente, la llamada de este servicio solo recibe 2 argumentos, un cambio de posición lineal y un cambio de posición angular relativos a la pose actual de la tortuga
+
+```python
+def teleportPI(y, ang):
+    rospy.wait_for_service('/turtle1/teleport_relative')
+    try:
+        teleportpi = rospy.ServiceProxy('/turtle1/teleport_relative', TeleportRelative)
+        resp2 = teleportpi(y, ang)
+        print('Teleported to ang: {}'.format(str(ang)))
+    except rospy.ServiceException as e:
+        print(str(e))
+```
+
+**Función para publicar desde un nodo hacia el tópico /turtle1/cmd_vel**
+
+Esta función recibe como parámetros las velocidades lineales relativas al marco de refrencia de la tortuga en el eje x, y, la velocidad angular alrededor del eje z, y el tiempo durante el que se aplican estos parámetros.
+
+El método Publisher() crea el tipo de dato capaz de publicar la información en el topico.
+
+El método init_node() inicia un nodo con nombre velPub.
+
+Se crea un objeto tipo Twist que almacena los atributos necesarios para definir la velocidad lineal y angular de la tortuga.
+
+```python
+def pubVel(vel_x, vel_y, omg_z, exe_time):
+    pub = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
+    rospy.init_node('velPub', anonymous=True)
+    vel = Twist()
+    vel.linear.x = vel_x
+    vel.linear.y = vel_y
+    vel.angular.z = omg_z
+    endTime = rospy.Time.now() + rospy.Duration(exe_time)
+    while rospy.Time.now() <= endTime:
+        pub.publish(vel)
+```
+
+Función check() se encarga de mutiplexar el evento capturado desde el tecaldo hacia una de las acciones prederminadas en los requerimientos del ejercicios.
+
+```python
+def check(tecla):
+    if(tecla == b'w'):
+        pubVel(1,0,0,0.01)
+
+    if(tecla == b's'):
+        pubVel(-1,0,0,0.01)
+
+    if(tecla == b'a'):
+        pubVel(0,0,1,0.01)
+
+    if(tecla == b'd'):
+        pubVel(0,0,-1,0.01)
+
+    if(tecla == b' '):
+        teleportPI(0,-pi)
+
+    if(tecla == b'r'):
+        teleport(0,0,0)
+```
+
+```python
+if __name__ == '__main__':
+    t = 1
+    while(t):
+        tecla = getkey()
+        check(tecla)
+        if (tecla == b'x'):
+            t = 0
+```
+
+Esta función es tomada desde el enlace propuesto en la guía para capturar los eventos del teclado.
+
+```python
+TERMIOS = termios
+def getkey():
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    new = termios.tcgetattr(fd)
+    new[3] = new[3] & ~TERMIOS.ICANON & ~TERMIOS.ECHO
+    new[6][TERMIOS.VMIN] = 1
+    new[6][TERMIOS.VTIME] = 0
+    termios.tcsetattr(fd, TERMIOS.TCSANOW, new)
+    c = None
+    try:
+        c = os.read(fd, 1)
+    finally:
+        termios.tcsetattr(fd, TERMIOS.TCSAFLUSH, old)
+    return c
+```
